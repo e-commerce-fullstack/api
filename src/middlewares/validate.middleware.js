@@ -1,9 +1,10 @@
 export const validateProduct = (req, res, next) => {
-  // const {name, price, category, stock} = req.body
+  if (!req.body) {
+    return res.status(400).json({ message: "Request body missing" });
+  }
 
   const allowedFields = ["name", "price", "category", "stock"];
 
-  // Get extra fields
   const extraFields = Object.keys(req.body).filter(
     (key) => !allowedFields.includes(key)
   );
@@ -11,15 +12,18 @@ export const validateProduct = (req, res, next) => {
   if (extraFields.length > 0) {
     return res.status(400).json({
       message: "Extra fields not allowed",
-      extraFields: extraFields,
+      extraFields,
     });
   }
 
-  // Optional: check required fields
-  for (let field of allowedFields) {
+  for (const field of allowedFields) {
     if (!req.body[field]) {
       return res.status(400).json({ message: `${field} is required` });
     }
+  }
+
+  if (!req.file) {
+    return res.status(400).json({ message: "Image is required" });
   }
 
   next();
@@ -41,4 +45,3 @@ export const validateOrder = (req, res, next) => {
 
   next();
 };
-

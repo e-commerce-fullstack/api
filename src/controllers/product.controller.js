@@ -3,14 +3,20 @@ import { addProduct, listProducts, listProductById, countProducts } from "../ser
 
 export const create = async (req, res, next) => {
   try {
-    res.json(await addProduct(req.body));
+    const product = await addProduct({
+      ...req.body,
+      image: req.file.path,
+    });
+
+    res.status(201).json(product);
   } catch (err) {
     next(err);
   }
 };
 
-// delete product admin 
 
+
+// delete product admin 
 export const getAll = async (req, res, next) => {
   try {
     const page = parseInt(req.query.page) || 1;
