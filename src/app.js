@@ -13,10 +13,23 @@ import cors from "cors";
 
 const app = express();
 
-// Allow requests from your frontend
+const allowedOrigins = [
+  "http://localhost:5173",          // local frontend
+  "https://shop-store-hazel.vercel.app" // deployed frontend
+];
+
 app.use(cors({
-  origin: "http://localhost:5173",  // or "*" for any origin
-  credentials: true                 // if sending cookies or auth headers
+  origin: function(origin, callback) {
+    // allow requests with no origin (like Postman)
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true
 }));
 
 app.use(express.json()); 
