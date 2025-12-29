@@ -3,11 +3,13 @@ import User from "../database/models/user.model.js";
 
 // Define route permission rules
 const routePermissions = [
-  { path: "/product/*", method: "GET", requireAuth: true },
+  { path: "/product/*", method: "GET", requireAuth: false },
   { path: "/product/*", method: "POST", requireAuth: true },
   { path: "/order/*", method: "GET", requireAuth: true },
   { path: "/order/*", method: "POST", requireAuth: true },
 ];
+// not use yet
+
 
 export const protectRoute = () => {
   return async (req, res, next) => {

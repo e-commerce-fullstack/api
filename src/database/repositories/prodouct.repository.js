@@ -36,3 +36,9 @@ export const countAllProducts = async ({search = "", category = ""} = {}) => {
 
   return await product.countDocuments(query);
 }
+
+
+// for category to get them
+export const getCategories = async () =>{
+  return await product.distinct('category')
+}

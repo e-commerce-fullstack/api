@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { create, getAll, getById } from "../../controllers/product.controller.js";
+import { create, getAll, getById, getCategories } from "../../controllers/product.controller.js";
 import { validateProduct } from "../../middlewares/validate.middleware.js";
 import { upload } from "../../middlewares/image.middleware.js";
 import { protectRoute } from "../../middlewares/protect.middleware.js";
@@ -16,5 +16,6 @@ router.post(
 
 router.get("/", getAll);
 router.get("/:id", protectRoute(), getById);
+router.get("/categories", getCategories);
 
 export default router;

@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
-import { createProduct, getAllProducts, countAllProducts, getProductById } from "../database/repositories/prodouct.repository.js";
+import { createProduct, getAllProducts, countAllProducts, getProductById, getCategories } from "../database/repositories/prodouct.repository.js";
+import productModel from "../database/models/product.model.js";
 
 export const addProduct = (data) => createProduct(data);
 
@@ -16,4 +17,8 @@ export const listProductById = async (id) => {
 // Accept search for counting
 export const countProducts = ({search = "", category = ""} = {}) => {
   return countAllProducts({search, category}); 
+}
+
+export const listCategories = async () =>{
+  return await productModel.distinct("category")
 }
