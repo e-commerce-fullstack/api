@@ -34,10 +34,6 @@ app.use(cors({
 
 app.use(express.json()); 
 
-// Serve uploads folder
-app.use("/api/v1/uploads", express.static(path.join(process.cwd(), "uploads")));
-// now images at "uploads/filename.jpg" are accessible at "http://localhost:4000/uploads/filename.jpg"
-
 connectDB(); // connect to MongoDB
 
 // register routes

@@ -9,9 +9,15 @@ import {
 
 export const create = async (req, res, next) => {
   try {
+    // 1. Safety Check: Ensure a file was actually uploaded
+    if (!req.file) {
+      return res.status(400).json({ message: "Please upload an image" });
+    }
+
     const product = await addProduct({
       ...req.body,
-      image: req.file.path,
+      // 2. With CloudinaryStorage, req.file.path is the FULL URL automatically
+      image: req.file.path, 
     });
 
     res.status(201).json(product);

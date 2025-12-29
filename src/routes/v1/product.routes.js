@@ -1,24 +1,24 @@
 import { Router } from "express";
 import { create, getAll, getById, getCategories } from "../../controllers/product.controller.js";
 import { validateProduct } from "../../middlewares/validate.middleware.js";
-import { upload } from "../../middlewares/image.middleware.js";
+import { upload } from "../../middlewares/image.middleware.js"; // 1. Keep this import
 import { protectRoute } from "../../middlewares/protect.middleware.js";
 
 const router = Router();
 
-router.get("/categories", getCategories); // Moved up to prevent conflict with /:id
+router.get("/categories", getCategories);
 
 // POST routes
 router.post(
   "/",
   protectRoute(),
-  upload.single("image"),
+  upload.single("image"), // 2. MUST include this here!
   validateProduct,
   create
 );
 
-// GET routes - ORDER MATTERS HERE
+// GET routes
 router.get("/", getAll);
-router.get("/:id", protectRoute(), getById); // Now only matches if it's not "/categories"
+router.get("/:id", protectRoute(), getById);
 
 export default router;
