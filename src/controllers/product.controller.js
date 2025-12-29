@@ -21,10 +21,11 @@ export const getAll = async (req, res, next) => {
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
     const search = req.query.search || ""; // get search query
+    const category = req.query.category || ""
 
-    const products = await listProducts({ skip, limit, search });
+    const products = await listProducts({ skip, limit, search, category });
 
-    const totalItems = await countProducts(search);
+    const totalItems = await countProducts({search, category});
     const totalPages = Math.ceil(totalItems / limit);
 
     res.json({

@@ -4,8 +4,8 @@ import { createProduct, getAllProducts, countAllProducts, getProductById } from 
 export const addProduct = (data) => createProduct(data);
 
 // Pass search to repository
-export const listProducts = ({ skip, limit, search = "" }) => {
-  return getAllProducts({ skip, limit, search });
+export const listProducts = ({ skip, limit, search = "" , category = ""}) => {
+  return getAllProducts({ skip, limit, search, category });
 }
 
 export const listProductById = async (id) => {
@@ -14,6 +14,6 @@ export const listProductById = async (id) => {
 }
 
 // Accept search for counting
-export const countProducts = (search = "") => {
-  return countAllProducts(search); 
+export const countProducts = ({search = "", category = ""} = {}) => {
+  return countAllProducts({search, category}); 
 }
