@@ -64,6 +64,7 @@ export const getById = async (req, res, next) => {
 };
 
 export const getCategories = async (req, res, next) => {
+  console.log("!!! Categories route reached !!!");
   try {
     const categories = await listCategories();
     res.json(categories);

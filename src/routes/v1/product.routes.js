@@ -6,6 +6,9 @@ import { protectRoute } from "../../middlewares/protect.middleware.js";
 
 const router = Router();
 
+router.get("/categories", getCategories); // Moved up to prevent conflict with /:id
+
+// POST routes
 router.post(
   "/",
   protectRoute(),
@@ -14,8 +17,8 @@ router.post(
   create
 );
 
+// GET routes - ORDER MATTERS HERE
 router.get("/", getAll);
-router.get("/:id", protectRoute(), getById);
-router.get("/categories", getCategories);
+router.get("/:id", protectRoute(), getById); // Now only matches if it's not "/categories"
 
 export default router;
