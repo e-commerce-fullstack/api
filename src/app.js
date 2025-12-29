@@ -15,7 +15,7 @@ const app = express();
 
 const allowedOrigins = [
   "http://localhost:5173",          // local frontend
-  "https://e-commerce-six-delta-78.vercel.app" // deployed frontend
+  "https://e-smart-shop.vercel.app/" // deployed frontend
 ];
 
 app.use(cors({
