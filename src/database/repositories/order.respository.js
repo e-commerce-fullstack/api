@@ -7,4 +7,4 @@ export const createOrder = (data) => order.create(data);
 export const getAllOrder = () =>
     order.find()
          .populate('user', 'name email')               // populate user details
-         .populate('products.product', 'name price category');  // populate each product in the array
+         .populate('products.product', 'name price category image');  // populate each product in the array
