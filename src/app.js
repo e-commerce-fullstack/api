@@ -17,7 +17,7 @@ const app = express();
 const allowedOrigins = [
   "http://localhost:5173",          // local frontend
   "https://e-smart-shop.vercel.app", // deployed frontend
-  "e-commerce.nupheaoeun.workers.dev"
+  "https://e-commerce.nupheaoeun.workers.dev"
 ];
 
 app.use(cors({
