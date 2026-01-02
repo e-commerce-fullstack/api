@@ -10,6 +10,7 @@ import authRoute from "./routes/v1/auth.route.js";
 import productRoute from './routes/v1/product.routes.js';
 import orderRoute from './routes/v1/order.routes.js';
 import paymentRoute from './routes/v1/payment.route.js'
+import authMiddleware from "./middlewares/auth.middleware.js";
 import cors from "cors";
 
 const app = express();
@@ -39,6 +40,7 @@ app.use(express.json());
 connectDB(); // connect to MongoDB
 
 // register routes
+app.use("/api/v1/auth/me", authMiddleware);
 app.use("/api/v1/auth", authRoute);
 app.use("/api/v1/product", productRoute);
 app.use("/api/v1/order", orderRoute);

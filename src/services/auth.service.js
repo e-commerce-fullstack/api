@@ -2,6 +2,7 @@ import {
   createUser,
   findUserByEmail,
   getUser,
+  findUserById,
 } from "../database/repositories/user.repository.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
@@ -41,4 +42,12 @@ export const login = async (data) => {
   );
 
   return {user, token}; // or return token/session info
+};
+
+
+// NEW: fetch user by ID
+export const getUserById = async (id) => {
+  const user = await findUserById(id);
+  if (!user) throw new Error("User not found");
+  return user;
 };
