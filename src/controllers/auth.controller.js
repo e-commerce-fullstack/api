@@ -1,4 +1,4 @@
-import { register, login } from "../services/auth.service.js";
+import { register, login, getUserById } from "../services/auth.service.js";
 
 export const registerUser = async (req, res, next) => {
   try {
@@ -26,3 +26,14 @@ export const logoutUser = async (req, res, next)=>{
     next(err)
   }
 }
+
+// NEW: /auth/me controller
+export const getMe = async (req, res, next) => {
+  try {
+    const userId = req.user.id; // from middleware
+    const user = await getUserById(req.user.id);
+    res.json({ user });
+  } catch (err) {
+    next(err);
+  }
+};
