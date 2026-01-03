@@ -7,66 +7,85 @@ import {
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { generateAccessToken, generateRefreshToken } from "../utils/token.js";
-import { refreshToken } from "../controllers/auth.controller.js";
 
-
+/**
+ * Register a new user
+ */
 export const register = async (data) => {
-  const user = await findUserByEmail(data.email);
+  try {
+    const user = await findUserByEmail(data.email);
+    if (user) throw new Error("User already exists");
+    if (!data.password) throw new Error("Password can't be empty");
 
-  if (user) throw new Error("User already exist");
+    const hashedPassword = await bcrypt.hash(data.password, 10);
+    const savedUser = await createUser({
+      ...data,
+      password: hashedPassword,
+    });
 
-  if (!data.password) throw new Erroor("Password can't be empty");
-
-  const hashedPassword = await bcrypt.hash(data.password, 10);
-  const savedUser = await createUser({
-    ...data,
-    password: hashedPassword,
-  });
-  console.log("Saved user:", savedUser);
-  return savedUser
+    console.log("Saved user:", savedUser);
+    return savedUser;
+  } catch (err) {
+    console.error("Register Error:", err.message);
+    throw err; // propagate error to controller
+  }
 };
 
+/**
+ * Login user
+ */
 export const login = async (data) => {
-  const user = await getUser(data.email);
+  try {
+    const user = await getUser(data.email);
+    if (!user) throw new Error("Incorrect email or password");
 
-  if(!user) throw new Error("Incorrect password or email")
+    const isMatch = await bcrypt.compare(data.password, user.password);
+    if (!isMatch) throw new Error("Incorrect email or password");
 
-  const isMatch = await bcrypt.compare(data.password, user.password)
-  if(!isMatch) throw new Error("Incorrect password or email")
+    const payload = {
+      id: user._id,
+      email: user.email,
+    };
 
+    const accessToken = generateAccessToken(payload);
+    const refreshToken = generateRefreshToken(payload);
 
-  const payload = {
-    id: user._id,
-    email: user.email
-  }
-
-  const accessToken = generateAccessToken(payload)
-  const refreshToken = generateRefreshToken(payload)
-
-  return {
-    user, 
-    accessToken,
-    refreshToken
+    return { user, accessToken, refreshToken };
+  } catch (err) {
+    console.error("Login Error:", err.message);
+    throw err; // propagate error to controller
   }
 };
 
-// refresh token
-export const refreshAccessToken = (refreshToken) => {
-  const decoded = jwt.verify(
-    refreshToken,
-    process.env.JWT_REFRESH_SECRET
-  )
+/**
+ * Refresh access token using a refresh token
+ */
+export const refreshAccessToken = (token) => {
+  try {
+    if (!token) throw new Error("No refresh token provided");
 
-  return generateAccessToken({
-    id: decoded.id,
-    email: decoded.email
-  })
-}
+    const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
+    return generateAccessToken({
+      id: decoded.id,
+      email: decoded.email,
+    });
+  } catch (err) {
+    console.error("Refresh Token Error:", err.message);
+    throw new Error("Invalid or expired refresh token");
+  }
+};
 
 
-// NEW: fetch user by ID
+/**
+ * Get user by ID
+ */
 export const getUserById = async (id) => {
-  const user = await findUserById(id);
-  if (!user) throw new Error("User not found");
-  return user;
+  try {
+    const user = await findUserById(id);
+    if (!user) throw new Error("User not found");
+    return user;
+  } catch (err) {
+    console.error("GetUserById Error:", err.message);
+    throw err;
+  }
 };

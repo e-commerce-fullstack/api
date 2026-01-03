@@ -18,19 +18,24 @@ export const loginUser = async (req, res, next) => {
   }
 };
 
-export const refreshToken = async (req, res, next) =>{
-  try{
-    const { refreshToken } = req.body
-    if(!refreshToken){
-      return res.status(401).json({message: "Refresh token missing"})
+
+export const refreshToken = async (req, res, next) => {
+  try {
+    const { refreshToken } = req.body; // frontend must send this
+    if (!refreshToken) {
+      return res.status(401).json({ message: "Refresh token missing" });
     }
 
-    const accessToken = refreshAccessToken(refreshToken)
-    res.json({accessToken})
-  }catch(err){
-    next(err)
+    // Generate a new access token
+    const accessToken = refreshAccessToken(refreshToken);
+
+    // Return the new access token to the frontend
+    res.json({ accessToken });
+  } catch (err) {
+    console.error("Refresh Token Error:", err.message);
+    res.status(401).json({ message: "Invalid or expired refresh token" });
   }
-}
+};
 
 export const logoutUser = async (req, res, next)=>{
   try{
