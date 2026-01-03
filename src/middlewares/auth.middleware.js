@@ -23,7 +23,7 @@ const authMiddleware = (req, res, next) => {
   try {
     // Verify the token using the secret key
     // This checks both signature and expiration
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
 
     // Attach the decoded payload to req.user
     // Controllers can use this to identify the authenticated user
@@ -33,7 +33,7 @@ const authMiddleware = (req, res, next) => {
     next();
   } catch (err) {
     // Token verification failed → respond with 401 Unauthorized
-    return res.status(401).json({ message: "Invalid or expired token" });
+    return res.status(401).json({ message: "Access token invalid or expired" });
   }
 };
 

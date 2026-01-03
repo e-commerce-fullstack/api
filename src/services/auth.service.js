@@ -6,9 +6,9 @@ import {
 } from "../database/repositories/user.repository.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { generateAccessToken, generateRefreshToken } from "../utils/token.js";
+import { refreshToken } from "../controllers/auth.controller.js";
 
-const JWT_SECRET = process.env.JWT_SECRET;
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN;
 
 export const register = async (data) => {
   const user = await findUserByEmail(data.email);
@@ -29,20 +29,39 @@ export const register = async (data) => {
 export const login = async (data) => {
   const user = await getUser(data.email);
 
-  const isMatch = await bcrypt.compare(data.password, user.password);
-  // compare plain password with hashed password
+  if(!user) throw new Error("Incorrect password or email")
 
-  if (!isMatch || !user) throw new Error("Incorrect password or email");
+  const isMatch = await bcrypt.compare(data.password, user.password)
+  if(!isMatch) throw new Error("Incorrect password or email")
 
-  // service handle logic and here is jwt
-  const token = jwt.sign(
-    { id: user._id, email: user.email , password: user.password, createdAt: user.createdAt, updatedAt: user.updatedAt},
-    JWT_SECRET,
-    { expiresIn: JWT_EXPIRES_IN }
-  );
 
-  return {user, token}; // or return token/session info
+  const payload = {
+    id: user._id,
+    email: user.email
+  }
+
+  const accessToken = generateAccessToken(payload)
+  const refreshToken = generateRefreshToken(payload)
+
+  return {
+    user, 
+    accessToken,
+    refreshToken
+  }
 };
+
+// refresh token
+export const refreshAccessToken = (refreshToken) => {
+  const decoded = jwt.verify(
+    refreshToken,
+    process.env.JWT_REFRESH_SECRET
+  )
+
+  return generateAccessToken({
+    id: decoded.id,
+    email: decoded.email
+  })
+}
 
 
 // NEW: fetch user by ID
