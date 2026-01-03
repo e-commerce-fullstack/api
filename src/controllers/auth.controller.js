@@ -47,7 +47,6 @@ export const logoutUser = async (req, res, next)=>{
 }
 
 // NEW: /auth/me controller
-// controllers/auth.controller.js
 export const getMe = async (req, res, next) => {
   try {
     // req.user.id comes from authMiddleware (access token)
