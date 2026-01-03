@@ -26,10 +26,10 @@ export const protectRoute = () => {
       const token = authHeader.split(" ")[1];
 
       // Verify the token using your secret
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
 
       // Find the user in the database
-      const foundUser = await User.findById(decoded.id);
+      const foundUser = await User.findById(decoded.id || decoded._id);
 
       // Reject if user does not exist
       if (!foundUser) {
