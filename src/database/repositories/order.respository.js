@@ -1,10 +1,17 @@
 import order from '../models/order.model.js';
 
-// Create a new order
+// ✅ Add this: Export the model itself for use in services if needed
+export const OrderModel = order;
+
 export const createOrder = (data) => order.create(data);
 
-// Get all orders with populated user and product info
+// ✅ Add this: Repository function for finding by ID
+export const getOrderRepoById = (id) => 
+    order.findById(id)
+         .populate('user', 'name email')
+         .populate('products.product', 'name price category image');
+
 export const getAllOrder = () =>
     order.find()
-         .populate('user', 'name email')               // populate user details
-         .populate('products.product', 'name price category image');  // populate each product in the array
+         .populate('user', 'name email')
+         .populate('products.product', 'name price category image');
