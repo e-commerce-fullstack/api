@@ -34,6 +34,9 @@ export const register = async (data) => {
 /**
  * Login user
  */
+/**
+ * Login user
+ */
 export const login = async (data) => {
   try {
     const user = await getUser(data.email);
@@ -42,9 +45,11 @@ export const login = async (data) => {
     const isMatch = await bcrypt.compare(data.password, user.password);
     if (!isMatch) throw new Error("Incorrect email or password");
 
+    // ADD ROLE HERE
     const payload = {
       id: user._id,
       email: user.email,
+      role: user.role, // <--- Crucial for the frontend and middleware
     };
 
     const accessToken = generateAccessToken(payload);
@@ -53,10 +58,13 @@ export const login = async (data) => {
     return { user, accessToken, refreshToken };
   } catch (err) {
     console.error("Login Error:", err.message);
-    throw err; // propagate error to controller
+    throw err;
   }
 };
 
+/**
+ * Refresh access token using a refresh token
+ */
 /**
  * Refresh access token using a refresh token
  */
@@ -65,9 +73,12 @@ export const refreshAccessToken = (token) => {
     if (!token) throw new Error("No refresh token provided");
 
     const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
+    
+    // Pass the decoded role back into the new access token
     return generateAccessToken({
       id: decoded.id,
       email: decoded.email,
+      role: decoded.role // <--- Add this
     });
   } catch (err) {
     console.error("Refresh Token Error:", err.message);

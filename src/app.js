@@ -11,6 +11,7 @@ import productRoute from './routes/v1/product.routes.js';
 import orderRoute from './routes/v1/order.routes.js';
 import paymentRoute from './routes/v1/payment.route.js'
 import authMiddleware from "./middlewares/auth.middleware.js";
+import userRoute from './routes/v1/user.route.js'
 import cors from "cors";
 
 const app = express();
@@ -41,10 +42,11 @@ connectDB(); // connect to MongoDB
 
 // register routes
 app.use("/api/v1/auth/me", authMiddleware);
+app.use("/api/v1/users", userRoute)
 app.use("/api/v1/auth", authRoute);
 app.use("/api/v1/product", productRoute);
 app.use("/api/v1/order", orderRoute);
-app.use("/api/v1/payments", paymentRoute);
+app.use("/api/v1/payment", paymentRoute);
 
 
 // app.use(global error handler)

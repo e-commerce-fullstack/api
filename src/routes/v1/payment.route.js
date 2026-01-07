@@ -13,7 +13,10 @@ const router = Router();
 router.post('/khqr', authMiddleware, submitKHQRPayment);
 
 // Admin Routes: View and Approve (Added protectRoute for security)
-router.get('/pending', authMiddleware, protectRoute('admin'), getPendingPayments);
-router.patch('/verify/:orderId', authMiddleware, protectRoute('admin'), verifyPayment);
+// Admin can view pending payments
+router.get('/pending', protectRoute('admin'), getPendingPayments);
+
+// Admin can verify a specific order
+router.patch('/verify/:orderId', protectRoute('admin'), verifyPayment);
 
 export default router;

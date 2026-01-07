@@ -1,48 +1,54 @@
 import jwt from "jsonwebtoken";
 import User from "../database/models/user.model.js";
 
-// Define route permission rules
-const routePermissions = [
-  { path: "/product/*", method: "GET", requireAuth: false },
-  { path: "/product/*", method: "POST", requireAuth: true },
-  { path: "/order/*", method: "GET", requireAuth: true },
-  { path: "/order/*", method: "POST", requireAuth: true },
-];
-// not use yet
-
-
-export const protectRoute = () => {
+/**
+ * Middleware to protect routes based on authentication and roles.
+ * @param {string} requiredRole - Optional role required to access the route (e.g., 'admin').
+ */
+export const protectRoute = (requiredRole) => {
   return async (req, res, next) => {
-    // Read the Authorization header
-    const authHeader = req.headers.authorization;
-
-    // Reject if no header or not starting with "Bearer "
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-
     try {
-      // Extract the token
-      const token = authHeader.split(" ")[1];
+      // 1. Read the Authorization header
+      const authHeader = req.headers.authorization;
 
-      // Verify the token using your secret
-      const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
-
-      // Find the user in the database
-      const foundUser = await User.findById(decoded.id || decoded._id);
-
-      // Reject if user does not exist
-      if (!foundUser) {
-        return res.status(401).json({ message: "Unauthorized" });
+      // 2. Reject if no header or not starting with "Bearer "
+      if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        return res.status(401).json({ message: "Unauthorized: No token provided" });
       }
 
-      // Attach the user to the request object for later use
+      // 3. Extract and Verify the token
+      const token = authHeader.split(" ")[1];
+      const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
+
+      // 4. Find the user in the database
+      // Using decoded.id or decoded._id depending on your token payload structure
+      const foundUser = await User.findById(decoded.id || decoded._id);
+
+      // 5. Reject if user does not exist in DB
+      if (!foundUser) {
+        return res.status(401).json({ message: "Unauthorized: User no longer exists" });
+      }
+
+      // 6. Role Authorization Check
+      // If a specific role is required (like 'admin'), check it here
+      if (requiredRole && foundUser.role !== requiredRole) {
+        console.warn(`Access denied for user ${foundUser.email}. Required: ${requiredRole}, Found: ${foundUser.role}`);
+        return res.status(403).json({ message: "Forbidden: You do not have the required permissions" });
+      }
+
+      // 7. Attach the full user object to the request for use in controllers
       req.user = foundUser;
 
-      // Continue to the next middleware/controller
+      // 8. Continue to the next middleware or controller
       next();
     } catch (err) {
-      // Invalid token or expired
+      console.error("Auth Middleware Error:", err.message);
+      
+      // Handle specific JWT errors
+      if (err.name === "TokenExpiredError") {
+        return res.status(401).json({ message: "Token expired" });
+      }
+      
       return res.status(401).json({ message: "Invalid token" });
     }
   };

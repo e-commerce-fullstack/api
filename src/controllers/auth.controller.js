@@ -9,10 +9,23 @@ export const registerUser = async (req, res, next) => {
   }
 };
 
+
 export const loginUser = async (req, res, next) => {
   try {
-    const tokens = await login(req.body);
-    res.json(tokens);
+    // 1. Your service already returns { user, accessToken, refreshToken }
+    const { user, accessToken, refreshToken } = await login(req.body);
+
+    // 2. Send the user object (which now includes the 'role' from your schema)
+    res.json({
+      accessToken,
+      refreshToken,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role // <--- CHECK THIS LINE
+      }
+    });
   } catch (err) {
     next(err);
   }
@@ -47,16 +60,19 @@ export const logoutUser = async (req, res, next)=>{
 }
 
 // NEW: /auth/me controller
+// backend/controllers/auth.controller.js
+
 export const getMe = async (req, res, next) => {
   try {
     // req.user.id comes from authMiddleware (access token)
     const user = await getUserById(req.user.id);
 
-    // return only safe fields
+    // return only safe fields - MUST INCLUDE ROLE
     const safeUser = {
       _id: user._id,
       name: user.name,
       email: user.email,
+      role: user.role, // <--- ADD THIS LINE
       createdAt: user.createdAt,
       updatedAt: user.updatedAt
     };
