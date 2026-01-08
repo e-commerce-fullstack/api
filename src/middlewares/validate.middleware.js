@@ -3,7 +3,8 @@ export const validateProduct = (req, res, next) => {
     return res.status(400).json({ message: "Request body missing" });
   }
 
-  const allowedFields = ["name", "price", "category", "stock"];
+  // UPDATE THIS LINE: Add "image" to the list
+  const allowedFields = ["name", "price", "category", "stock", "image"];
 
   const extraFields = Object.keys(req.body).filter(
     (key) => !allowedFields.includes(key)
@@ -16,7 +17,10 @@ export const validateProduct = (req, res, next) => {
     });
   }
 
-  for (const field of allowedFields) {
+  // Keep your required check for text fields
+  // NOTE: We don't check req.body.image here because the file is in req.file
+  const requiredFields = ["name", "price", "category", "stock"];
+  for (const field of requiredFields) {
     if (!req.body[field]) {
       return res.status(400).json({ message: `${field} is required` });
     }
@@ -28,7 +32,6 @@ export const validateProduct = (req, res, next) => {
 
   next();
 };
-
 
 export const validateOrder = (req, res, next) => {
   // req.body is an object sent by the client in a POST request, e.g.:

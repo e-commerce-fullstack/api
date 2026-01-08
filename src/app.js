@@ -37,14 +37,14 @@ app.use(cors({
 }));
 
 app.use(express.json()); 
-
+// app.use(express.urlencoded({ extended: true })); // solve upload image from admin
 connectDB(); // connect to MongoDB
 
 // register routes
+app.use("/api/v1/product", productRoute);
 app.use("/api/v1/auth/me", authMiddleware);
 app.use("/api/v1/users", userRoute)
 app.use("/api/v1/auth", authRoute);
-app.use("/api/v1/product", productRoute);
 app.use("/api/v1/order", orderRoute);
 app.use("/api/v1/payment", paymentRoute);
 
