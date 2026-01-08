@@ -4,8 +4,33 @@ import {
   listProducts,
   listProductById,
   countProducts,
+  removeProductService,
   listCategories
 } from "../services/product.service.js";
+
+
+export const deleted = async (req, res, next) =>{
+  try {
+    const {id} = req.params
+    const result = await removeProductService(id)
+
+    if (!result) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found"
+      });
+    }
+
+    // 3. Send a success response
+    return res.status(200).json({
+      success: true,
+      message: "Product deleted successfully",
+      data: result // Optional: send back the deleted object info
+    });
+  } catch (err) {
+    next(err)
+  }
+}
 
 export const create = async (req, res, next) => {
   try {

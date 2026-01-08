@@ -3,6 +3,9 @@ import product from "../models/product.model.js";
 // Create a product
 export const createProduct = (data) => product.create(data);
 
+// delete a product 
+export const deleteProduct = (id) => product.findByIdAndDelete(id)
+
 // Get all products with pagination and optional search
 export const getAllProducts = async ({
   skip = 0,

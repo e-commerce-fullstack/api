@@ -1,8 +1,11 @@
 import mongoose from "mongoose";
-import { createProduct, getAllProducts, countAllProducts, getProductById, getCategories } from "../database/repositories/prodouct.repository.js";
+import { createProduct, getAllProducts, countAllProducts, getProductById, getCategories, deleteProduct } from "../database/repositories/prodouct.repository.js";
 import productModel from "../database/models/product.model.js";
 
 export const addProduct = (data) => createProduct(data);
+
+// delete 
+export const removeProductService = (id) => deleteProduct(id)
 
 // Pass search to repository
 export const listProducts = ({ skip, limit, search = "" , category = ""}) => {
