@@ -5,10 +5,37 @@ import {
   listProductById,
   countProducts,
   removeProductService,
-  listCategories
+  listCategories,
+  updatedProductService
 } from "../services/product.service.js";
 
+export const updated = async (req, res, next)=>{
+  try {
+    const { id } = req.params
+    const updateData = {...req.body}
+    const result = await updatedProductService(id, updateData)
 
+    // Check if the product existed
+    if (!result) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found to update"
+      });
+    }
+
+    // 3. Send a success response (Crucial!)
+    return res.status(200).json({
+      success: true,
+      message: "Product updated successfully",
+      data: result
+    });
+  } catch (err) {
+  
+    next(err)
+  }
+}
+
+// delete
 export const deleted = async (req, res, next) =>{
   try {
     const {id} = req.params
