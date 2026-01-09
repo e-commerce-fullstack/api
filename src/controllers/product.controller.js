@@ -6,20 +6,24 @@ import {
   countProducts,
   removeProductService,
   listCategories,
-  updatedProductService
+  updatedProductService,
 } from "../services/product.service.js";
 
-export const updated = async (req, res, next)=>{
+export const updated = async (req, res, next) => {
   try {
-    const { id } = req.params
-    const updateData = {...req.body}
-    const result = await updatedProductService(id, updateData)
+    const { id } = req.params;
+    const updateData = { ...req.body };
+    // 2. Check if a new file was uploaded via Multer/Cloudinary
+    if (req.file) {
+      updateData.image = req.file.path;
+    }
+    const result = await updatedProductService(id, updateData);
 
     // Check if the product existed
     if (!result) {
       return res.status(404).json({
         success: false,
-        message: "Product not found to update"
+        message: "Product not found to update",
       });
     }
 
@@ -27,37 +31,12 @@ export const updated = async (req, res, next)=>{
     return res.status(200).json({
       success: true,
       message: "Product updated successfully",
-      data: result
+      data: result,
     });
   } catch (err) {
-  
-    next(err)
+    next(err);
   }
-}
-
-// delete
-export const deleted = async (req, res, next) =>{
-  try {
-    const {id} = req.params
-    const result = await removeProductService(id)
-
-    if (!result) {
-      return res.status(404).json({
-        success: false,
-        message: "Product not found"
-      });
-    }
-
-    // 3. Send a success response
-    return res.status(200).json({
-      success: true,
-      message: "Product deleted successfully",
-      data: result // Optional: send back the deleted object info
-    });
-  } catch (err) {
-    next(err)
-  }
-}
+};
 
 export const create = async (req, res, next) => {
   try {
@@ -69,7 +48,7 @@ export const create = async (req, res, next) => {
     const product = await addProduct({
       ...req.body,
       // 2. With CloudinaryStorage, req.file.path is the FULL URL automatically
-      image: req.file.path, 
+      image: req.file.path,
     });
 
     res.status(201).json(product);
@@ -78,6 +57,29 @@ export const create = async (req, res, next) => {
   }
 };
 
+// delete
+export const deleted = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const result = await removeProductService(id);
+
+    if (!result) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found",
+      });
+    }
+
+    // 3. Send a success response
+    return res.status(200).json({
+      success: true,
+      message: "Product deleted successfully",
+      data: result, // Optional: send back the deleted object info
+    });
+  } catch (err) {
+    next(err);
+  }
+};
 export const getAll = async (req, res, next) => {
   try {
     const page = parseInt(req.query.page) || 1;
