@@ -29,6 +29,18 @@ export const getAllProducts = async ({
 // Get a single product by ID
 export const getProductById = (id) => product.findById(id);
 
+// update product 
+// product.service.js (or repository)
+export const updateProduct = async (id, data) => {
+  return await product.findByIdAndUpdate(
+    id, 
+    data, 
+    { 
+      new: true,          // Returns the document AFTER the update
+      runValidators: true // Ensures the update respects your Schema rules
+    }
+  );
+};
 // Count products, optionally filtered by search
 export const countAllProducts = async ({ search = "", category = "" } = {}) => {
   const query = {};
