@@ -1,22 +1,21 @@
 import { Router } from 'express';
 import { 
     submitKHQRPayment, 
-    verifyPayment, 
-    getPendingPayments 
+    checkPaymentStatus, 
+    // getAllPayments      
 } from '../../controllers/payment.controller.js';
 import authMiddleware from '../../middlewares/auth.middleware.js';
 import { protectRoute } from '../../middlewares/protect.middleware.js';
 
 const router = Router();
 
-// User Route: Submit payment
+// --- USER ROUTES ---
+// Requires authentication to create or check their own payment
 router.post('/khqr', authMiddleware, submitKHQRPayment);
+router.get('/check-status/:md5', authMiddleware, checkPaymentStatus);
 
-// Admin Routes: View and Approve (Added protectRoute for security)
-// Admin can view pending payments
-router.get('/pending', protectRoute('admin'), getPendingPayments);
-
-// Admin can verify a specific order
-router.patch('/verify/:orderId', protectRoute('admin'), verifyPayment);
+// --- ADMIN ROUTES ---
+// Added authMiddleware before protectRoute to ensure req.user exists before checking roles
+// router.get('/all', authMiddleware, protectRoute('admin'), getAllPayments);
 
 export default router;
