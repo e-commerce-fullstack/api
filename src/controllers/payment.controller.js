@@ -41,7 +41,7 @@ export const submitKHQRPayment = async (req, res) => {
 
     // 1. USE INDIVIDUAL INFO (Best for @bkrt / @bkus accounts)
     const individualInfo = new IndividualInfo(
-      process.env.BAKONG_ACCOUNT_ID.trim(),
+      process.env.BAKONG_ACCOUNT_ID,
       "E Store",
       "Phnom Penh",
       parseFloat(amount), 
