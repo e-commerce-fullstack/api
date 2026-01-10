@@ -1,95 +1,161 @@
-import Payment from '../database/models/payment.model.js';
-import Order from '../database/models/order.model.js'
+import Payment from "../database/models/payment.model.js";
+import order from "../database/models/order.model.js";
+import {
+  BakongKHQR,
+  MerchantInfo,
+  IndividualInfo,
+  khqrData,
+} from "bakong-khqr";
+import axios from "axios";
+import crypto from "crypto";
+
 /**
- * @desc    Submit a new KHQR Payment (User Action)
- * @route   POST /api/v1/payment/khqr
+ * Helper function to calculate CRC16 (The "Check Digit" for KHQR)
+ * This is required when we manually modify the QR string.
  */
+function setCRC16(data) {
+  let crc = 0xffff;
+  const j = data.length;
+  for (let i = 0; i < j; i++) {
+    let x = ((crc >> 8) ^ data.charCodeAt(i)) & 0xff;
+    x ^= x >> 4;
+    crc = ((crc << 8) ^ (x << 12) ^ (x << 5) ^ x) & 0xffff;
+  }
+  return crc.toString(16).toUpperCase().padStart(4, "0");
+}
+
+/**
+ * @desc    Generate KHQR with Auto-Amount and Create Payment
+ */
+// ... (keep the CRC16 function at the top)
+
 export const submitKHQRPayment = async (req, res) => {
-    try {
-        const { orderId, transactionId, amount } = req.body;
+  try {
+    const { orderId } = req.body;
+    const foundOrder = await order.findById(orderId);
+    if (!foundOrder) return res.status(404).json({ success: false });
 
-        // 1. Create the payment record in the payments collection
-        const payment = await Payment.create({
-            order: orderId,
-            transactionId: transactionId.trim(), // Clean whitespace
-            amount,
-            status: 'PENDING'
-        });
+    const khqr = new BakongKHQR();
+    const amount = foundOrder.total.toFixed(2); // String: "179.98"
+    const billNumber = foundOrder._id.toString().slice(-10);
 
-        // 2. Update the Order to show it is now waiting for admin review
-        // This changes paymentStatus from 'unpaid' to 'pending_verification'
-        await Order.findByIdAndUpdate(orderId, {
-            paymentStatus: 'pending_verification',
-            transactionId: transactionId // Store ref on order for easy admin search
-        });
+    // 1. USE INDIVIDUAL INFO (Best for @bkrt / @bkus accounts)
+    const individualInfo = new IndividualInfo(
+      process.env.BAKONG_ACCOUNT_ID.trim(),
+      "E Store",
+      "Phnom Penh",
+      parseFloat(amount), 
+      khqrData.currency.usd, 
+      billNumber
+    );
 
-        res.status(201).json({ 
-            success: true, 
-            message: "Payment submitted! Please wait for admin approval.", 
-            payment 
-        });
-    } catch (err) {
-        // Handle MongoDB E11000 Duplicate Key Error
-        if (err.code === 11000) {
-            return res.status(400).json({ 
-                success: false, 
-                message: "This Reference Number has already been used. Please check your bank receipt." 
-            });
-        }
-        
-        console.error("Payment Submission Error:", err);
-        res.status(500).json({ 
-            success: false, 
-            message: "Internal server error. Please try again." 
-        });
+    const khqrResponse = khqr.generateIndividual(individualInfo);
+    let qrString = khqrResponse.data.qr;
+
+    // 2. CLEANER OVERRIDE
+    let baseStr = qrString.slice(0, -4);
+
+    // Ensure USD Tag 53 is 840 (NBC Standard)
+    if (baseStr.includes("5303116")) {
+      baseStr = baseStr.replace("5303116", "5303840");
     }
+
+    // Ensure Amount Tag 54 is present
+    if (!baseStr.includes("54")) {
+      const tag54 = `54${amount.length.toString().padStart(2, "0")}${amount}`;
+      // Insert Tag 54 before the Country Code (Tag 58)
+      baseStr = baseStr.replace("5802KH", `${tag54}5802KH`);
+    }
+
+    // 3. FINAL CRC RE-CALCULATION
+    // This step is critical. If the CRC doesn't match the modified string, 
+    // the bank will refund the money.
+    const finalQr = baseStr + setCRC16(baseStr);
+    const md5 = crypto.createHash("md5").update(finalQr).digest("hex");
+
+    // 4. Save Record
+    await Payment.create({
+      order: foundOrder._id,
+      md5: md5.toLowerCase(),
+      amount: foundOrder.total,
+      status: "PENDING",
+      method: "KHQR",
+    });
+
+    res.status(201).json({
+      success: true,
+      qrString: finalQr,
+      md5: md5,
+    });
+  } catch (err) {
+    console.error("Payment Error:", err.message);
+    res.status(500).json({ success: false, message: err.message });
+  }
 };
 
 /**
- * @desc    Verify/Approve Payment (Admin Action)
- * @route   PATCH /api/v1/payments/verify/:orderId
+ * @desc    Check real Bakong API status via MD5
  */
-export const verifyPayment = async (req, res) => {
-    try {
-        const { orderId } = req.params;
+export const checkPaymentStatus = async (req, res) => {
+  try {
+    const { md5 } = req.params;
+    const searchMd5 = md5.toLowerCase();
 
-        // 1. Update Order Status to PAID
-        const updatedOrder = await Order.findByIdAndUpdate(
-            orderId, 
-            { paymentStatus: 'paid', status: 'processing' }, 
-            { new: true }
-        );
+    const payment = await Payment.findOne({ md5: searchMd5 });
+    if (!payment) return res.status(404).json({ message: "Payment not found" });
 
-        if (!updatedOrder) {
-            return res.status(404).json({ success: false, message: "Order not found" });
-        }
-
-        // 2. Update the associated Payment record to PAID
-        await Payment.findOneAndUpdate(
-            { order: orderId }, 
-            { status: 'PAID' }
-        );
-
-        res.status(200).json({ 
-            success: true, 
-            message: "Payment verified successfully. Order is now being processed.", 
-            order: updatedOrder 
-        });
-    } catch (err) {
-        console.error("Verification Error:", err);
-        res.status(500).json({ success: false, message: "Failed to verify payment." });
+    if (payment.status === "PAID") {
+      return res.status(200).json({ success: true, status: "PAID" });
     }
+
+    // Call Bakong Gateway
+    const bakongResponse = await axios.post(
+      "https://api-bakong.nbc.gov.kh/v1/check_transaction_by_md5",
+      { md5: searchMd5 },
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.BAKONG_API_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (bakongResponse.data && bakongResponse.data.responseCode === 0) {
+      const bankData = bakongResponse.data.data;
+
+      payment.status = "PAID";
+      payment.transactionId = bankData.hash;
+      await payment.save();
+
+      await order.findByIdAndUpdate(payment.order, {
+        paymentStatus: "paid",
+        status: "processing",
+      });
+
+      return res.status(200).json({
+        success: true,
+        status: "PAID",
+        message: "Payment verified!",
+      });
+    }
+
+    res.status(200).json({ success: false, status: "PENDING" });
+  } catch (err) {
+    console.error("Bakong API Error:", err.response?.data || err.message);
+    res.status(200).json({ success: false, status: "PENDING" });
+  }
 };
 
 /**
- * @desc    Get all pending payments for Admin Dashboard
- * @route   GET /api/v1/payments/pending
+ * @desc    Fetch all payments
  */
-export const getPendingPayments = async (req, res) => {
-    try {
-        const pending = await Payment.find({ status: 'PENDING' }).populate('order');
-        res.status(200).json(pending);
-    } catch (err) {
-        res.status(500).json({ message: "Error fetching payments" });
-    }
+export const getAllPayments = async (req, res) => {
+  try {
+    const payments = await Payment.find()
+      .populate("order")
+      .sort({ createdAt: -1 });
+    res.status(200).json(payments);
+  } catch (err) {
+    res.status(500).json({ message: "Error fetching payments" });
+  }
 };
