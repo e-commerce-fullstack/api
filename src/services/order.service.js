@@ -19,7 +19,7 @@ export const placeOrder = async (data) => {
     const validatedProducts = data.products.map(item => {
         const product = products.find(p => p._id.toString() === item.product.toString());
         
-        if (!product) throw new Error(`Product ${item.product} not found in database`);
+        if (!product) throw new Error(`Product ${item.product} not found`);
         
         // Ensure price is a number, default to 0
         const price = Number(product.price) || 0;
